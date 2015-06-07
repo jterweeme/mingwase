@@ -1,79 +1,91 @@
 #include <windows.h>
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
+wchar_t szClassName[] = L"WindowsApp";
 HINSTANCE g_hinst;
-wchar_t g_appname[] = L"Onzin";
 
 class WinClass
 {
-	WNDCLASSEX wc;
+	WNDCLASSEX wcl;
 public:
 	WinClass();
-	void doRegister() { RegisterClassEx(&wc); }
+	void doRegister() { RegisterClassEx(&wcl); }
 };
 
 class Window
 {
-	HWND _hwnd;
+	HWND hwnd;
 public:
 	Window();
-	void show() { ::ShowWindow(_hwnd, SW_SHOW); }
-	void update() { ::UpdateWindow(_hwnd); }
+	void show(int n) { ShowWindow(hwnd, n); }
 };
 
-class MingWase
+class Main
 {
+	int _msgPump();
 public:
-	int run();
+	int run(int n);
 };
 
 Window::Window()
 {
-	_hwnd = CreateWindowEx(0, g_appname, L"Windows App", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 544, 375, HWND_DESKTOP, NULL, g_hinst, NULL);
+	hwnd = CreateWindowEx(0, szClassName, L"Windows App",
+		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 544, 375, HWND_DESKTOP, NULL, g_hinst, NULL);
 }
 
 WinClass::WinClass()
 {
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.cbSize = sizeof(wc);
-	wc.lpfnWndProc = WndProc;
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.hInstance = g_hinst;
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.lpszClassName = g_appname;
-	wc.hbrBackground = (HBRUSH)(COLOR_3DSHADOW + 1);
-	wc.lpszMenuName = L"MAIN";
+	wcl.hInstance = g_hinst;
+	wcl.lpszClassName = szClassName;
+	wcl.lpfnWndProc = WindowProc;
+	wcl.style = CS_DBLCLKS;
+	wcl.cbSize = sizeof (WNDCLASSEX);
+	wcl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wcl.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wcl.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcl.lpszMenuName = NULL;
+	wcl.cbClsExtra = 0;
+	wcl.cbWndExtra = 0;
+	wcl.hbrBackground = (HBRUSH)COLOR_BACKGROUND;
 }
 
-int MingWase::run()
+int Main::_msgPump()
+{
+	MSG messages;
+
+	while (GetMessage(&messages, NULL, 0, 0))
+		DispatchMessage(&messages);
+
+	return messages.wParam;
+}
+
+int Main::run(int n)
 {
 	WinClass wc;
 	wc.doRegister();
-	MessageBox(NULL, L"Bericht", L"Bericht", 0);
 	Window w;
-	w.show();
-	w.update();
-	MSG msg;
-	int status;
-
-	while ((status = ::GetMessage(&msg, 0, 0, 0)) != 0)
-		::DispatchMessage(&msg);
-
-	return msg.wParam;
+	w.show(n);
+	return _msgPump();
 }
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE, LPSTR, int n)
 {
+	g_hinst = hThisInstance;
+	Main main;
+	return main.run(n);
+}
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hwnd, message, wParam, lParam);
+	}
+
 	return 0;
 }
-
-int WINAPI WinMain(HINSTANCE h, HINSTANCE p, char *c, int n)
-{
-	MingWase mw;
-    return mw.run();
-}
-
 
