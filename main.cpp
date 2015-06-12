@@ -2,19 +2,24 @@
 #include <CommCtrl.h>
 #include "resource.h"
 
-class Toolbar
+class Handle
 {
-    HWND _tbar;
+protected:
+    HWND _hwnd;
+public:
+    HWND hwnd() const { return _hwnd; }
+};
+
+class Toolbar : public Handle
+{
 public:
     void init(HWND parent, HINSTANCE hinst);
 };
 
-class MDIClient
+class MDIClient : public Handle
 {
-    HWND _mdiClient;
 public:
     void create(HWND parent, HINSTANCE hinst);
-    HWND hwnd() const { return _mdiClient; }
 };
 
 class WinClass
@@ -35,8 +40,9 @@ class Window
 {
 	HWND _hwnd;
 public:
-	Window(HINSTANCE hinst, LPCWSTR className);
+    void create(HINSTANCE hinst, LPCWSTR cname);
 	void show(int n) { ShowWindow(_hwnd, n); }
+    void update() { UpdateWindow(_hwnd); }
 };
 
 class Main
@@ -48,6 +54,7 @@ class Main
     LRESULT _wProc(HWND, UINT, WPARAM, LPARAM);
     WinClass _wc;
     WinClass _mc;
+    Window _mw;
     MDIClient _mdic;
     int command(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
     int create(HWND hwnd);
@@ -60,9 +67,9 @@ public:
     void init(HINSTANCE hinst, int n);
 };
 
-Window::Window(HINSTANCE hinst, LPCWSTR className)
+void Window::create(HINSTANCE hinst, LPCWSTR cname)
 {
-	_hwnd = CreateWindowEx(0, className, L"Windows App", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT, 544, 375, 0, 0, hinst, 0);
+    _hwnd = CreateWindowEx(0, cname, L"Windows App", WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT, 544, 375, 0, 0, hinst, 0);
 }
 
 void WinClass::init(HINSTANCE hinst, LPCWSTR className, WNDPROC cb, LPCWSTR menu, HBRUSH bg)
@@ -85,10 +92,10 @@ void MDIClient::create(HWND parent, HINSTANCE hinst)
 {
     CLIENTCREATESTRUCT ccs;
 
-    _mdiClient = CreateWindowEx(WS_EX_CLIENTEDGE, L"mdiclient", NULL, WS_CHILD | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL,
+    _hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, L"mdiclient", NULL, WS_CHILD | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, parent, (HMENU)981, hinst, (LPVOID)&ccs);
 
-    ShowWindow(_mdiClient, SW_SHOW);
+    ShowWindow(_hwnd, SW_SHOW);
 }
 
 int Main::msgPump()
@@ -113,8 +120,9 @@ void Main::init(HINSTANCE hinst, int n)
     _mc.init(hinst, L"child", Main::mdiProc, 0, COLOR_3DFACE + 1);
 	_wc.doRegister();
     _mc.doRegister();
-	Window w(hinst, _wc.className());
-	w.show(n);
+    _mw.create(hinst, _wc.className());
+	_mw.show(n);
+    _mw.update();
 }
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE, LPSTR, int n)
@@ -161,21 +169,42 @@ void Toolbar::init(HWND parent, HINSTANCE hinst)
 {
     TBADDBITMAP tbab;
     TBBUTTON tbb[9];
-    _tbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, parent, (HMENU)IDR_TOOLBAR1, hinst, NULL);
+    _hwnd = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, parent, (HMENU)IDR_TOOLBAR1, hinst, NULL);
 
-    if (!_tbar)
+    if (!_hwnd)
         throw L"Toolbar creation failed.";
 
-    SendMessage(_tbar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
+    SendMessage(_hwnd, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
     tbab.hInst = HINST_COMMCTRL;
     tbab.nID = IDB_STD_SMALL_COLOR;
-    SendMessage(_tbar, TB_ADDBITMAP, 0, (LPARAM)&tbab);
+    SendMessage(_hwnd, TB_ADDBITMAP, 0, (LPARAM)&tbab);
     ZeroMemory(tbb, sizeof(tbb));
     tbb[0].iBitmap = STD_FILENEW;
     tbb[0].fsState = TBSTATE_ENABLED;
     tbb[0].fsStyle = TBSTYLE_BUTTON;
     tbb[0].idCommand = ID_FILE_NEW;
-    SendMessage(_tbar, TB_ADDBUTTONS, 1, (LPARAM)&tbb);
+    tbb[1].iBitmap = STD_FILEOPEN;
+    tbb[1].fsState = TBSTATE_ENABLED;
+    tbb[1].fsStyle = TBSTYLE_BUTTON;
+    tbb[1].idCommand = ID_FILE_OPEN;
+    tbb[2].iBitmap = STD_FILESAVE;
+    tbb[2].fsStyle = TBSTYLE_BUTTON;
+    tbb[2].idCommand = ID_FILE_SAVE;
+    tbb[3].fsStyle = TBSTYLE_SEP;
+    tbb[4].iBitmap = STD_CUT;
+    tbb[4].fsStyle = TBSTYLE_BUTTON;
+    tbb[4].idCommand = ID_EDIT_CUT;
+    tbb[5].iBitmap = STD_COPY;
+    tbb[5].fsStyle = TBSTYLE_BUTTON;
+    tbb[5].idCommand = ID_EDIT_COPY;
+    tbb[6].iBitmap = STD_PASTE;
+    tbb[6].fsStyle = TBSTYLE_BUTTON;
+    tbb[6].idCommand = ID_EDIT_PASTE;
+    tbb[7].fsStyle = TBSTYLE_SEP;
+    tbb[8].iBitmap = STD_UNDO;
+    tbb[8].fsStyle = TBSTYLE_BUTTON;
+    //tbb[8].idCommand = ID_EDIT_UNDO;
+    SendMessage(_hwnd, TB_ADDBUTTONS, 9, (LPARAM)&tbb);
 }
 
 int Main::create(HWND parent)
@@ -193,6 +222,9 @@ LRESULT CALLBACK Main::mdiProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 LRESULT Main::_wProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
+    RECT rectClient, rectStatus, rectTool;
+    UINT uToolHeight, uStatusHeight, uClientAlreaHeight;
+
     switch (msg)
     {
     case WM_CREATE:
@@ -201,15 +233,23 @@ LRESULT Main::_wProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
+    case WM_CLOSE:
+        DestroyWindow(hwnd);
+        break;
     case WM_COMMAND:
         command(hwnd, msg, wp, lp);
         break;
     case WM_SIZE:
+        SendMessage(_tbar.hwnd(), TB_AUTOSIZE, 0, 0);
         SendMessage(_sbar, WM_SIZE, 0, 0);
+        //MoveWindow(_mdic.hwnd(), 0, uToolHeight, rectClient.right, uClientAlreaHeight - uStatusHeight - uToolHeight, TRUE);
+        MoveWindow(_mdic.hwnd(), 0, 20, 200, 200, TRUE);
         break;
+    default:
+        return DefFrameProc(hwnd, _mdic.hwnd(), msg, wp, lp);
     }
 
-    return DefFrameProc(hwnd, _mdic.hwnd(), msg, wp, lp);
+    return 0;
 }
 
 LRESULT CALLBACK Main::wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -217,6 +257,7 @@ LRESULT CALLBACK Main::wndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     LRESULT retval = 0;
     Main *main;
     main = Main::getInstance();
+
     try
     {
         retval = main->_wProc(hwnd, msg, wp, lp);
