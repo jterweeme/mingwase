@@ -13,6 +13,15 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="toolbar1.bmp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7db678b3-371a-40f9-9894-3db10f828e05}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
