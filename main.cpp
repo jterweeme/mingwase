@@ -224,6 +224,7 @@ LRESULT Main::_wProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     RECT rectClient, rectStatus, rectTool;
     UINT uToolHeight, uStatusHeight, uClientAlreaHeight;
+    GetClientRect(hwnd, &rectClient);
 
     switch (msg)
     {
@@ -243,7 +244,7 @@ LRESULT Main::_wProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         SendMessage(_tbar.hwnd(), TB_AUTOSIZE, 0, 0);
         SendMessage(_sbar, WM_SIZE, 0, 0);
         //MoveWindow(_mdic.hwnd(), 0, uToolHeight, rectClient.right, uClientAlreaHeight - uStatusHeight - uToolHeight, TRUE);
-        MoveWindow(_mdic.hwnd(), 0, 20, 200, 200, TRUE);
+        MoveWindow(_mdic.hwnd(), 0, 30, rectClient.right - 2, rectClient.bottom - 50, TRUE);
         break;
     default:
         return DefFrameProc(hwnd, _mdic.hwnd(), msg, wp, lp);
